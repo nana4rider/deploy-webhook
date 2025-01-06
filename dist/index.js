@@ -33785,6 +33785,8 @@ app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res) => {
     return resJson("Missing signature", 400);
   } else if (!checkHeader(timestamp)) {
     return resJson("Missing timestamp", 400);
+  } else if (serviceId === "deploy-webhook") {
+    return resJson("Cannot specify deploy-webhook", 403);
   }
   const now = Math.floor(Date.now() / 1e3);
   if (Math.abs(now - parseInt(timestamp, 10)) > TIME_LIMIT) {
