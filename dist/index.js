@@ -2983,7 +2983,7 @@ var require_fecha_umd = __commonJS({
         var requiredFields = {};
         newFormat = regexEscape(newFormat).replace(token, function($0) {
           var info = parseFlags[$0];
-          var field2 = info[0], regex = info[1], requiredField = info[3];
+          var field2 = info[0], regex2 = info[1], requiredField = info[3];
           if (specifiedFields[field2]) {
             throw new Error("Invalid format. " + field2 + " specified twice in format");
           }
@@ -2992,7 +2992,7 @@ var require_fecha_umd = __commonJS({
             requiredFields[requiredField] = true;
           }
           parseInfo.push(info);
-          return "(" + regex + ")";
+          return "(" + regex2 + ")";
         });
         Object.keys(requiredFields).forEach(function(field2) {
           if (!specifiedFields[field2]) {
@@ -30963,12 +30963,12 @@ var require_ipaddr = __commonJS({
           return this.toNormalizedString().replace(/((^|:)(0(:|$))+)/, "::");
         };
         IPv6.prototype.toRFC5952String = function() {
-          var bestMatchIndex, bestMatchLength, match, regex, string;
-          regex = /((^|:)(0(:|$)){2,})/g;
+          var bestMatchIndex, bestMatchLength, match, regex2, string;
+          regex2 = /((^|:)(0(:|$)){2,})/g;
           string = this.toNormalizedString();
           bestMatchIndex = 0;
           bestMatchLength = -1;
-          while (match = regex.exec(string)) {
+          while (match = regex2.exec(string)) {
             if (match[0].length > bestMatchLength) {
               bestMatchIndex = match.index;
               bestMatchLength = match[0].length;
@@ -33711,6 +33711,27 @@ var import_env_var2 = __toESM(require_env_var(), 1);
 var import_express = __toESM(require_express2(), 1);
 import * as childProcess from "child_process";
 import crypto from "crypto";
+
+// node_modules/ansi-regex/index.js
+function ansiRegex({ onlyFirst = false } = {}) {
+  const ST = "(?:\\u0007|\\u001B\\u005C|\\u009C)";
+  const pattern = [
+    `[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?${ST})`,
+    "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))"
+  ].join("|");
+  return new RegExp(pattern, onlyFirst ? void 0 : "g");
+}
+
+// node_modules/strip-ansi/index.js
+var regex = ansiRegex();
+function stripAnsi(string) {
+  if (typeof string !== "string") {
+    throw new TypeError(`Expected a \`string\`, got \`${typeof string}\``);
+  }
+  return string.replace(regex, "");
+}
+
+// src/index.ts
 import * as util from "util";
 var exec2 = util.promisify(childProcess.exec);
 var DEPLOY_SCRIPT_PATH = import_env_var2.default.get("DEPLOY_SCRIPT_PATH").required().asString();
@@ -33718,33 +33739,37 @@ var DISCORD_WEBHOOK_URL = import_env_var2.default.get("DISCORD_WEBHOOK_URL").req
 var WEBHOOK_SECRET = import_env_var2.default.get("WEBHOOK_SECRET").required().asString();
 var PORT = import_env_var2.default.get("PORT").default(3e3).asPortNumber();
 var TIME_LIMIT = import_env_var2.default.get("TIME_LIMIT").default(300).asIntPositive();
+var ERROR_LOG_PATTERN = import_env_var2.default.get("ERROR_LOG_PATTERN").default("error").asRegExp("i");
 function verifySignature(signature, timestamp) {
-  const expectedSignature = crypto.createHmac("sha256", WEBHOOK_SECRET).update(timestamp).digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  try {
+    const expectedSignature = crypto.createHmac("sha256", WEBHOOK_SECRET).update(timestamp).digest("hex");
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (err) {
+    logger_default.warn("verifySignature:", err);
+    return false;
+  }
 }
 function checkHeader(header) {
   return typeof header === "string" && header !== "";
 }
-async function sendDiscordWebhook(log, status) {
+async function sendDiscordWebhook(payload, deployLog) {
   const formData = new FormData();
+  formData.append("payload_json", JSON.stringify(payload));
   formData.append(
     "file",
-    new Blob([log], { type: "text/plain" }),
-    "deploy.log"
+    new Blob([deployLog], { type: "text/plain" }),
+    `deploy_${Date.now()}.log`
   );
-  formData.append(
-    "payload_json",
-    JSON.stringify({
-      content: `Deployment ${status}`
-    })
-  );
-  await fetch(DISCORD_WEBHOOK_URL, {
+  const res = await fetch(DISCORD_WEBHOOK_URL, {
     method: "POST",
     body: formData
   });
+  if (!res.ok) {
+    logger_default.error(await res.text());
+  }
 }
 var app = (0, import_express.default)();
 app.use(import_body_parser.default.json());
@@ -33770,17 +33795,61 @@ app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res, next) => {
     return resJson("Invalid signature", 403);
   }
   logger_default.info(`Webhook received and verified: ${serviceId}`);
+  let log = "";
+  let isSucceeded = false;
   try {
     resJson("Accepted", 202);
-    const { stdout: log } = await exec2(`${DEPLOY_SCRIPT_PATH} ${serviceId}`);
-    logger_default.info(`Deployment succeeded for ${serviceId}`);
-    await sendDiscordWebhook(log, "succeeded");
+    const { stdout } = await exec2(`sh ${DEPLOY_SCRIPT_PATH} ${serviceId}`);
+    log = stdout;
+    if (!ERROR_LOG_PATTERN.test(log)) {
+      isSucceeded = true;
+    }
   } catch (err) {
-    const log = err instanceof Error ? err.message : String(err);
+    const { stdout } = err;
+    log = stdout;
+  }
+  if (isSucceeded) {
+    logger_default.info(`Deployment succeeded for ${serviceId}`);
+    await sendDiscordWebhook(
+      {
+        embeds: [
+          {
+            title: "Success: Deploy",
+            description: `Service ID: ${serviceId}`,
+            color: 65280
+          }
+        ]
+      },
+      stripAnsi(log)
+    );
+  } else {
     logger_default.error(`Deployment failed for ${serviceId}`);
-    await sendDiscordWebhook(log, "failed");
+    await sendDiscordWebhook(
+      {
+        content: "@everyone",
+        embeds: [
+          {
+            title: "Failure: Deploy",
+            description: `Service ID: ${serviceId}`,
+            color: 16711680
+          }
+        ]
+      },
+      stripAnsi(log)
+    );
   }
 });
+app.get("/health", (req, res) => {
+  res.json({});
+});
+app.use((req, res) => {
+  res.status(404).json({ message: "Not Found" });
+});
+var errorHandler = (err, req, res) => {
+  logger_default.error("Unhandled error:", err);
+  res.status(500).json({ message: "Internal Server Error" });
+};
+app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

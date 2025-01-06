@@ -15,7 +15,7 @@ const logger = createLogger({
         log = `${log}\n${stack}`;
       }
       return log;
-    })
+    }),
   ),
   transports: [
     new transports.Console({

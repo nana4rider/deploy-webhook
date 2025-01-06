@@ -16,7 +16,7 @@ fi
 
 TIMESTAMP=$(date +%s)
 SIGNATURE=$(echo -n "$TIMESTAMP" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')
-curl -X POST "http://localhost:$PORT/webhook/$1" \
+curl -i -X POST "http://localhost:$PORT/webhook/$1" \
   -H "Content-Type: application/json" \
   -H "X-Signature: $SIGNATURE" \
   -H "X-Timestamp: $TIMESTAMP"
