@@ -97,7 +97,7 @@ app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res) => {
   let isSucceeded = false;
   try {
     resJson("Accepted", 202);
-    const { stdout } = await exec(`sh ${DEPLOY_SCRIPT_PATH} ${serviceId}`);
+    const { stdout } = await exec(`${DEPLOY_SCRIPT_PATH} ${serviceId}`);
     log = stdout;
     if (!ERROR_LOG_PATTERN.test(log)) {
       isSucceeded = true;
