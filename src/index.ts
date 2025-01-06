@@ -20,7 +20,7 @@ const PORT = env.get("PORT").default(3000).asPortNumber();
 const TIME_LIMIT = env.get("TIME_LIMIT").default(300).asIntPositive();
 const ERROR_LOG_PATTERN = env
   .get("ERROR_LOG_PATTERN")
-  .default("error")
+  .default("error(?!\\.log)")
   .asRegExp("i");
 
 function verifySignature(signature: string, timestamp: string): boolean {

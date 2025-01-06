@@ -33739,7 +33739,7 @@ var DISCORD_WEBHOOK_URL = import_env_var2.default.get("DISCORD_WEBHOOK_URL").req
 var WEBHOOK_SECRET = import_env_var2.default.get("WEBHOOK_SECRET").required().asString();
 var PORT = import_env_var2.default.get("PORT").default(3e3).asPortNumber();
 var TIME_LIMIT = import_env_var2.default.get("TIME_LIMIT").default(300).asIntPositive();
-var ERROR_LOG_PATTERN = import_env_var2.default.get("ERROR_LOG_PATTERN").default("error").asRegExp("i");
+var ERROR_LOG_PATTERN = import_env_var2.default.get("ERROR_LOG_PATTERN").default("error(?!\\.log)").asRegExp("i");
 function verifySignature(signature, timestamp) {
   try {
     const expectedSignature = crypto.createHmac("sha256", WEBHOOK_SECRET).update(timestamp).digest("hex");
