@@ -65,82 +65,79 @@ async function sendDiscordWebhook(payload: JsonObject, deployLog: string) {
 const app = express();
 app.use(bodyParser.json());
 
-app.post(
-  "/webhook/:serviceId(^(?!deploy-webhook$)[a-zA-Z0-9_-]+$)",
-  async (req, res) => {
-    const { serviceId } = req.params;
-    const resJson = (message: string, statusCode = 200) => {
-      res.status(statusCode).json({ message });
-      return;
-    };
-    const signature = req.headers["x-signature"];
-    const timestamp = req.headers["x-timestamp"];
+app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res) => {
+  const { serviceId } = req.params;
+  const resJson = (message: string, statusCode = 200) => {
+    res.status(statusCode).json({ message });
+    return;
+  };
+  const signature = req.headers["x-signature"];
+  const timestamp = req.headers["x-timestamp"];
 
-    if (!checkHeader(signature)) {
-      return resJson("Missing signature", 400);
-    } else if (!checkHeader(timestamp)) {
-      return resJson("Missing timestamp", 400);
+  if (!checkHeader(signature)) {
+    return resJson("Missing signature", 400);
+  } else if (!checkHeader(timestamp)) {
+    return resJson("Missing timestamp", 400);
+  }
+
+  // Verify timestamp
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp, 10)) > TIME_LIMIT) {
+    return resJson("Timestamp expired", 403);
+  }
+
+  // Verify HMAC signature
+  if (!verifySignature(signature, timestamp)) {
+    return resJson("Invalid signature", 403);
+  }
+
+  logger.info(`Webhook received and verified: ${serviceId}`);
+
+  let log = "";
+  let isSucceeded = false;
+  try {
+    resJson("Accepted", 202);
+    const { stdout } = await exec(`${DEPLOY_SCRIPT_PATH} ${serviceId}`);
+    log = stdout;
+    if (!ERROR_LOG_PATTERN.test(log)) {
+      isSucceeded = true;
     }
+  } catch (err) {
+    const { stdout } = err as { stdout: string; stderr: string };
+    log = stdout;
+  }
 
-    // Verify timestamp
-    const now = Math.floor(Date.now() / 1000);
-    if (Math.abs(now - parseInt(timestamp, 10)) > TIME_LIMIT) {
-      return resJson("Timestamp expired", 403);
-    }
-
-    // Verify HMAC signature
-    if (!verifySignature(signature, timestamp)) {
-      return resJson("Invalid signature", 403);
-    }
-
-    logger.info(`Webhook received and verified: ${serviceId}`);
-
-    let log = "";
-    let isSucceeded = false;
-    try {
-      resJson("Accepted", 202);
-      const { stdout } = await exec(`${DEPLOY_SCRIPT_PATH} ${serviceId}`);
-      log = stdout;
-      if (!ERROR_LOG_PATTERN.test(log)) {
-        isSucceeded = true;
-      }
-    } catch (err) {
-      const { stdout } = err as { stdout: string; stderr: string };
-      log = stdout;
-    }
-
-    if (isSucceeded) {
-      logger.info(`Deployment succeeded for ${serviceId}`);
-      await sendDiscordWebhook(
-        {
-          embeds: [
-            {
-              title: "Success: Deploy",
-              description: `Service ID: ${serviceId}`,
-              color: 0x00ff00,
-            },
-          ],
-        },
-        stripAnsi(log),
-      );
-    } else {
-      logger.error(`Deployment failed for ${serviceId}`);
-      await sendDiscordWebhook(
-        {
-          content: "@everyone",
-          embeds: [
-            {
-              title: "Failure: Deploy",
-              description: `Service ID: ${serviceId}`,
-              color: 0xff0000,
-            },
-          ],
-        },
-        stripAnsi(log),
-      );
-    }
-  },
-);
+  if (isSucceeded) {
+    logger.info(`Deployment succeeded for ${serviceId}`);
+    await sendDiscordWebhook(
+      {
+        embeds: [
+          {
+            title: "Success: Deploy",
+            description: `Service ID: ${serviceId}`,
+            color: 0x00ff00,
+          },
+        ],
+      },
+      stripAnsi(log),
+    );
+  } else {
+    logger.error(`Deployment failed for ${serviceId}`);
+    await sendDiscordWebhook(
+      {
+        content: "@everyone",
+        embeds: [
+          {
+            title: "Failure: Deploy",
+            description: `Service ID: ${serviceId}`,
+            color: 0xff0000,
+          },
+        ],
+      },
+      stripAnsi(log),
+    );
+  }
+});
 
 app.get("/health", (req, res) => {
   res.json({});
