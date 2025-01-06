@@ -86,7 +86,7 @@ app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res, next) => {
 
   try {
     resJson("Accepted", 202);
-    const { stdout: log } = await exec(`${DEPLOY_SCRIPT_PATH} ${serviceId}`);
+    const { stdout: log } = await exec(`sh ${DEPLOY_SCRIPT_PATH} ${serviceId}`);
     logger.info(`Deployment succeeded for ${serviceId}`);
     await sendDiscordWebhook(log, "succeeded");
   } catch (err) {
