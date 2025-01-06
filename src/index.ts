@@ -65,11 +65,10 @@ async function sendDiscordWebhook(payload: JsonObject, deployLog: string) {
 const app = express();
 app.use(bodyParser.json());
 
-app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res, next) => {
+app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res) => {
   const { serviceId } = req.params;
   const resJson = (message: string, statusCode = 200) => {
     res.status(statusCode).json({ message });
-    next();
     return;
   };
   const signature = req.headers["x-signature"];
@@ -144,12 +143,14 @@ app.get("/health", (req, res) => {
   res.json({});
 });
 
-app.use((req, res) => {
+app.all("*", (req, res) => {
   res.status(404).json({ message: "Not Found" });
 });
 
-const errorHandler: ErrorRequestHandler = (err, req, res) => {
+// エラーハンドリングミドルウェア
+const errorHandler: ErrorRequestHandler = (err, req, res, _) => {
   logger.error("Unhandled error:", err);
+
   res.status(500).json({ message: "Internal Server Error" });
 };
 app.use(errorHandler);
