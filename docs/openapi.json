@@ -26,7 +26,7 @@
             "name": "serviceId",
             "in": "path",
             "required": true,
-            "description": "The ID of the service to deploy. Cannot be 'deploy-webhook'.",
+            "description": "The ID of the service to deploy.",
             "schema": {
               "type": "string",
               "pattern": "^[a-zA-Z0-9_-]+$"
