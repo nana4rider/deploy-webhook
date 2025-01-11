@@ -3,7 +3,7 @@
   "info": {
     "title": "Deploy Webhook",
     "version": "1.0.0",
-    "description": "API for triggering deployment scripts via webhooks and monitoring server health."
+    "description": "API for triggering deployment scripts via webhooks."
   },
   "servers": [
     {
@@ -30,6 +30,25 @@
             "schema": {
               "type": "string",
               "pattern": "^[a-zA-Z0-9_-]+$"
+            }
+          },
+          {
+            "name": "x-signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC SHA-256 signature of the request, generated using the webhook secret.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Timestamp of the request in seconds since epoch.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
             }
           }
         ],
@@ -114,25 +133,6 @@
                 "example": {
                   "message": "Not Found"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "summary": "Health check endpoint",
-        "description": "Returns an empty JSON object to indicate the server is running.",
-        "responses": {
-          "200": {
-            "description": "Server is healthy.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                },
-                "example": {}
               }
             }
           }
