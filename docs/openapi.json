@@ -1,0 +1,157 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Deploy Webhook",
+    "version": "1.0.0",
+    "description": "API for triggering deployment scripts via webhooks and monitoring server health."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:{port}",
+      "description": "Local server",
+      "variables": {
+        "port": {
+          "default": "3000"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/webhook/{serviceId}": {
+      "post": {
+        "summary": "Trigger a deployment for a specific service",
+        "description": "Triggers the deployment script for the given service ID if the webhook request is verified.",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the service to deploy. Cannot be 'deploy-webhook'.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The webhook payload.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Deployment accepted. Processing in the background.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Accepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request due to missing or invalid headers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Missing signature"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden due to invalid signature, timestamp, or forbidden serviceId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid signature"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found if the serviceId is invalid or endpoint does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not Found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns an empty JSON object to indicate the server is running.",
+        "responses": {
+          "200": {
+            "description": "Server is healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "WebhookSignature": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "HMAC SHA-256"
+      }
+    }
+  },
+  "security": [
+    {
+      "WebhookSignature": []
+    }
+  ]
+}
