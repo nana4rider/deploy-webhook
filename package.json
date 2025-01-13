@@ -1,6 +1,6 @@
 {
   "name": "deploy-webhook",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -16,7 +16,7 @@
   "description": "",
   "dependencies": {
     "body-parser": "^1.20.3",
-    "env-var": "^7.5.0",
+    "envalid": "^8.0.0",
     "express": "^4.21.2",
     "strip-ansi": "^7.1.0",
     "winston": "^3.17.0"

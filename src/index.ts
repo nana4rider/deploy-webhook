@@ -1,32 +1,23 @@
+import env from "@/env";
 import logger from "@/logger";
 import bodyParser from "body-parser";
 import * as childProcess from "child_process";
 import crypto from "crypto";
-import env from "env-var";
 import express, { ErrorRequestHandler } from "express";
 import stripAnsi from "strip-ansi";
 import { JsonObject } from "type-fest";
 import * as util from "util";
 
 const exec = util.promisify(childProcess.exec);
-
-const DEPLOY_SCRIPT_PATH = env.get("DEPLOY_SCRIPT_PATH").required().asString();
-const DISCORD_WEBHOOK_URL = env
-  .get("DISCORD_WEBHOOK_URL")
-  .required()
-  .asString();
-const WEBHOOK_SECRET = env.get("WEBHOOK_SECRET").required().asString();
-const PORT = env.get("PORT").default(3000).asPortNumber();
-const TIME_LIMIT = env.get("TIME_LIMIT").default(300).asIntPositive();
-const ERROR_LOG_PATTERN = env
-  .get("ERROR_LOG_PATTERN")
-  .default("error(?!\\.log)")
-  .asRegExp("i");
+const errorLogPattern = new RegExp(
+  env.ERROR_LOG_PATTERN,
+  env.ERROR_LOG_PATTERN_FLAG,
+);
 
 function verifySignature(signature: string, timestamp: string): boolean {
   try {
     const expectedSignature = crypto
-      .createHmac("sha256", WEBHOOK_SECRET)
+      .createHmac("sha256", env.WEBHOOK_SECRET)
       .update(timestamp)
       .digest("hex");
 
@@ -52,7 +43,7 @@ async function sendDiscordWebhook(payload: JsonObject, deployLog: string) {
     new Blob([deployLog], { type: "text/plain" }),
     `deploy_${Date.now()}.log`,
   );
-  const res = await fetch(DISCORD_WEBHOOK_URL, {
+  const res = await fetch(env.DISCORD_WEBHOOK_URL, {
     method: "POST",
     body: formData,
   });
@@ -82,7 +73,7 @@ app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res) => {
 
   // Verify timestamp
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp, 10)) > TIME_LIMIT) {
+  if (Math.abs(now - parseInt(timestamp, 10)) > env.TIME_LIMIT) {
     return resJson("Timestamp expired", 403);
   }
 
@@ -97,9 +88,9 @@ app.post("/webhook/:serviceId([a-zA-Z0-9_-]+)", async (req, res) => {
   let isSucceeded = false;
   try {
     resJson("Accepted", 202);
-    const { stdout } = await exec(`${DEPLOY_SCRIPT_PATH} ${serviceId}`);
+    const { stdout } = await exec(`${env.DEPLOY_SCRIPT_PATH} ${serviceId}`);
     log = stdout;
-    if (!ERROR_LOG_PATTERN.test(log)) {
+    if (!errorLogPattern.test(log)) {
       isSucceeded = true;
     }
   } catch (err) {
@@ -155,6 +146,6 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _) => {
 };
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(env.PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
