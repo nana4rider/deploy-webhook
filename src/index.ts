@@ -147,5 +147,5 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _) => {
 app.use(errorHandler);
 
 app.listen(env.PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${env.PORT}`);
 });
