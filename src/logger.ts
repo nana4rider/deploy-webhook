@@ -3,6 +3,14 @@ import { createLogger, format, transports } from "winston";
 
 const logger = createLogger({
   level: env.LOG_LEVEL,
+  levels: {
+    fatal: 0,
+    error: 1,
+    warn: 2,
+    info: 3,
+    trace: 4,
+    debug: 5,
+  },
   format: format.combine(
     format.errors({ stack: true }),
     format.colorize(),
