@@ -16,13 +16,7 @@ const env = cleanEnv(process.env, {
   }),
   WEBHOOK_SECRET: str({}),
   TIME_LIMIT: num({
-    default: 300,
-  }),
-  ERROR_LOG_PATTERN: str({
-    default: "error(?!\\.log)",
-  }),
-  ERROR_LOG_PATTERN_FLAG: str({
-    default: "i",
+    default: 60,
   }),
 });
 

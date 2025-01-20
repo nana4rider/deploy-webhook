@@ -1,17 +1,8 @@
 import env from "@/env";
 import logger from "@/logger";
+import executeDeployScript from "@/service/deploy";
 import { verifySignature } from "@/util/cryptoUtil";
-import * as childProcess from "child_process";
 import fastify from "fastify";
-import stripAnsi from "strip-ansi";
-import { JsonObject } from "type-fest";
-import * as util from "util";
-
-const exec = util.promisify(childProcess.exec);
-const errorLogPattern = new RegExp(
-  env.ERROR_LOG_PATTERN,
-  env.ERROR_LOG_PATTERN_FLAG,
-);
 
 export default async function initializeHttpServer() {
   const server = fastify();
@@ -55,7 +46,6 @@ export default async function initializeHttpServer() {
     },
     async (request, reply) => {
       const { serviceId } = request.params;
-
       const signature = request.headers["x-signature"];
       const timestamp = request.headers["x-timestamp"];
 
@@ -72,51 +62,11 @@ export default async function initializeHttpServer() {
 
       logger.info(`Webhook received and verified: ${serviceId}`);
 
-      let log = "";
-      let isSucceeded = false;
-      try {
-        reply.code(202).send({ message: "Accepted" });
+      executeDeployScript(serviceId).catch((err) => {
+        logger.error("callDeployScript", err);
+      });
 
-        const { stdout } = await exec(`${env.DEPLOY_SCRIPT_PATH} ${serviceId}`);
-        log = stdout;
-        if (!errorLogPattern.test(log)) {
-          isSucceeded = true;
-        }
-      } catch (err) {
-        const { stdout } = err as { stdout: string; stderr: string };
-        log = stdout;
-      }
-
-      if (isSucceeded) {
-        logger.info(`Deployment succeeded for ${serviceId}`);
-        await sendDiscordWebhook(
-          {
-            embeds: [
-              {
-                title: "Success: Deploy",
-                description: `Service ID: ${serviceId}`,
-                color: 0x00ff00,
-              },
-            ],
-          },
-          stripAnsi(log),
-        );
-      } else {
-        logger.error(`Deployment failed for ${serviceId}`);
-        await sendDiscordWebhook(
-          {
-            content: "@everyone",
-            embeds: [
-              {
-                title: "Failure: Deploy",
-                description: `Service ID: ${serviceId}`,
-                color: 0xff0000,
-              },
-            ],
-          },
-          stripAnsi(log),
-        );
-      }
+      reply.code(202).send({ message: "Accepted" });
     },
   );
 
@@ -130,22 +80,4 @@ export default async function initializeHttpServer() {
   logger.info(`[HTTP] listen port: ${env.PORT}`);
 
   return server;
-}
-
-async function sendDiscordWebhook(payload: JsonObject, deployLog: string) {
-  const formData = new FormData();
-  formData.append("payload_json", JSON.stringify(payload));
-  formData.append(
-    "file",
-    new Blob([deployLog], { type: "text/plain" }),
-    `deploy_${Date.now()}.log`,
-  );
-  const res = await fetch(env.DISCORD_WEBHOOK_URL, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!res.ok) {
-    logger.error(await res.text());
-  }
 }
