@@ -1,4 +1,4 @@
-import { cleanEnv, num, port, str } from "envalid";
+import { cleanEnv, num, port, str, url } from "envalid";
 
 const env = cleanEnv(process.env, {
   LOG_LEVEL: str({ default: "info", desc: "ログ出力" }),
@@ -10,7 +10,7 @@ const env = cleanEnv(process.env, {
     desc: "デプロイスクリプトの場所",
     example: "/path/to/deploy.sh",
   }),
-  DISCORD_WEBHOOK_URL: str({
+  DISCORD_WEBHOOK_URL: url({
     desc: "Discord WebhookのURL",
     example: "https://discord.com/api/webhooks/.../...",
   }),
