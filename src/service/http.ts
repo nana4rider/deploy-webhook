@@ -1,6 +1,7 @@
 import env from "@/env";
 import logger from "@/logger";
 import executeDeployScript from "@/service/deploy";
+import sendDiscordWebhook from "@/service/webhook";
 import { verifySignature } from "@/util/cryptoUtil";
 import fastify from "fastify";
 
@@ -64,6 +65,15 @@ export default async function initializeHttpServer() {
 
       executeDeployScript(serviceId).catch((err) => {
         logger.error("callDeployScript", err);
+        void sendDiscordWebhook({
+          content: "@everyone",
+          embeds: [
+            {
+              title: "Failure: Execute Deploy Script",
+              color: 0xff0000,
+            },
+          ],
+        });
       });
 
       reply.code(202).send({ message: "Accepted" });
