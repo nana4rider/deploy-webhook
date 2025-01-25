@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  { files: ["src/**/*.ts"] },
+  { files: ["src/**/*.ts", "generate-openapi.ts"] },
   { ignores: ["dist", "coverage", "*.js"] },
   { languageOptions: { globals: globals.node } },
   pluginJs.configs.recommended,

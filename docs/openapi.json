@@ -1,9 +1,86 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "Deploy Webhook",
-    "version": "1.0.0",
-    "description": "API for triggering deployment scripts via webhooks."
+    "description": "Webhookを介してデプロイスクリプトを実行するためのAPI",
+    "version": "1.2.0"
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/webhook/{serviceId}": {
+      "post": {
+        "description": "指定されたサービスIDを引数に指定して、デプロイスクリプトを実行します",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "in": "path",
+            "name": "serviceId",
+            "required": true,
+            "description": "デプロイするサービスのID"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "x-signature",
+            "required": true,
+            "description": "シークレットを使用して生成されたリクエストのHMAC SHA-256署名"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "in": "header",
+            "name": "x-timestamp",
+            "required": true,
+            "description": "リクエストのタイムスタンプ(エポック秒)"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "デプロイが受け付けられ、バックグラウンドで処理を開始した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "デプロイが受け付けられ、バックグラウンドで処理を開始した",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Accepted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ヘッダーが不足している、または無効",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ヘッダーが不足している、または無効",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid signature"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   },
   "servers": [
     {
@@ -14,144 +91,6 @@
           "default": "3000"
         }
       }
-    }
-  ],
-  "paths": {
-    "/webhook/{serviceId}": {
-      "post": {
-        "summary": "Trigger a deployment for a specific service",
-        "description": "Triggers the deployment script for the given service ID if the webhook request is verified.",
-        "parameters": [
-          {
-            "name": "serviceId",
-            "in": "path",
-            "required": true,
-            "description": "The ID of the service to deploy.",
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-zA-Z0-9_-]+$"
-            }
-          },
-          {
-            "name": "x-signature",
-            "in": "header",
-            "required": true,
-            "description": "HMAC SHA-256 signature of the request, generated using the webhook secret.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "x-timestamp",
-            "in": "header",
-            "required": true,
-            "description": "Timestamp of the request in seconds since epoch.",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "The webhook payload.",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Deployment accepted. Processing in the background.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Accepted"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request due to missing or invalid headers.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Missing signature"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden due to invalid signature, timestamp, or forbidden serviceId.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Invalid signature"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found if the serviceId is invalid or endpoint does not exist.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Not Found"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "WebhookSignature": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "HMAC SHA-256"
-      }
-    }
-  },
-  "security": [
-    {
-      "WebhookSignature": []
     }
   ]
 }

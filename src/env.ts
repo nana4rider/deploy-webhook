@@ -7,14 +7,17 @@ const env = cleanEnv(process.env, {
     default: 3000,
   }),
   DEPLOY_SCRIPT_PATH: str({
-    desc: "デプロイスクリプトの場所",
+    desc: "デプロイスクリプトのパス",
+    default: "./deploy.sh",
     example: "/path/to/deploy.sh",
   }),
   DISCORD_WEBHOOK_URL: url({
     desc: "Discord WebhookのURL",
     example: "https://discord.com/api/webhooks/.../...",
   }),
-  WEBHOOK_SECRET: str({}),
+  WEBHOOK_SECRET: str({
+    desc: "クライアントに共有しているシークレット",
+  }),
   TIME_LIMIT: num({
     default: 60,
   }),

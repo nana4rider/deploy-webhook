@@ -1,6 +1,7 @@
 {
   "name": "deploy-webhook",
-  "version": "1.1.2",
+  "version": "1.2.0",
+  "description": "Webhookを介してデプロイスクリプトを実行するためのAPI",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -9,13 +10,14 @@
     "build": "node build.js",
     "lint": "npx tsc --noEmit && npx eslint --max-warnings 0 && npx prettier . --check",
     "lint:fix": "npx eslint --fix && npx prettier . --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "openapi": "npx tsx --env-file=.env.test generate-openapi.ts"
   },
   "author": "nana4rider",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@actions/exec": "^1.1.1",
+    "discord.js": "^14.17.3",
     "envalid": "^8.0.0",
     "fastify": "^5.2.1",
     "strip-ansi": "^7.1.0",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@fastify/swagger": "^9.4.2",
     "@types/node": "^22.10.7",
     "esbuild": "^0.24.2",
     "esbuild-plugin-alias": "^0.2.1",
