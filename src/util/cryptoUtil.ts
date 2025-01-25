@@ -2,11 +2,14 @@ import env from "@/env";
 import logger from "@/logger";
 import crypto from "crypto";
 
-export function verifySignature(signature: string, timestamp: string): boolean {
+export function verifySignature(
+  signature: string,
+  epochSeconds: number,
+): boolean {
   try {
     const expectedSignature = crypto
       .createHmac("sha256", env.WEBHOOK_SECRET)
-      .update(timestamp)
+      .update(epochSeconds.toString())
       .digest("hex");
 
     return crypto.timingSafeEqual(

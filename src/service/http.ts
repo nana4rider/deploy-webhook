@@ -88,11 +88,11 @@ export function route(server: FastifyInstance) {
         },
       },
       preHandler: (request, reply, done) => {
-        const { "x-signature": signature, "x-timestamp": timestamp } =
-          request.headers;
+        const signature = request.headers["x-signature"];
+        const timestamp = parseInt(request.headers["x-timestamp"], 10);
         // タイムスタンプの検証
         const now = Math.floor(Date.now() / 1000);
-        if (Math.abs(now - parseInt(timestamp, 10)) > env.TIME_LIMIT) {
+        if (Math.abs(now - timestamp) > env.TIME_LIMIT) {
           reply.code(403).send({ message: "Timestamp expired" });
           return;
         }
