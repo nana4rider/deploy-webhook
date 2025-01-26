@@ -35,7 +35,7 @@ docker run -d \
   -e DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/id/token \
   -e WEBHOOK_SECRET=secret \
   -p 3000:3000 \
-  -v ./deploy.sh:/home/node/deploy.sh
+  -v ./deploy.sh:/app/deploy.sh
   --restart always \
   nana4rider/deploy-webhook:latest
 ```
