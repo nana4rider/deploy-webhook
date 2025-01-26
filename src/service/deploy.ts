@@ -59,8 +59,7 @@ export default async function executeDeployScript(serviceId: string) {
   } catch (err) {
     logger.error(`Deployment failed for ${serviceId}`, err);
 
-    const message =
-      err instanceof Error ? (err.stack ?? err.message) : String(err);
+    const message = (err as Error).stack!;
     const files: AttachmentPayload[] = [
       {
         attachment: Buffer.from(message, "utf-8"),
