@@ -19,7 +19,7 @@ const env = cleanEnv(process.env, {
     desc: "クライアントに共有しているシークレット",
   }),
   TIME_LIMIT: num({
-    default: 60,
+    default: 30,
   }),
 });
 
