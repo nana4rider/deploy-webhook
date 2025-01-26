@@ -6,25 +6,16 @@
 
 ## 概要
 
-GitHub Actionsからデプロイスクリプトを実行するためのAPIです。
+[GitHub Actions](https://docs.github.com/ja/actions)からデプロイスクリプトを実行するためのAPIです。
 
 ## 使い方
 
-必要な環境変数については[こちら](https://github.com/nana4rider/deploy-webhook/blob/main/src/env.ts)をご確認ください。
-
-### Production
+### Native
 
 ```sh
 npm install
 npm run build
-node dist/index
-```
-
-### Development
-
-```sh
-npm install
-npm run dev
+node --env-file=.env dist/index
 ```
 
 ### Docker
@@ -32,15 +23,17 @@ npm run dev
 ```sh
 docker run -d \
   --name deploy-webhook \
-  -e DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/id/token \
-  -e WEBHOOK_SECRET=secret \
+  --env-file .env \
   -p 3000:3000 \
   -v ./deploy.sh:/app/deploy.sh
   --restart always \
   nana4rider/deploy-webhook:latest
 ```
 
-### クライアント側の実装
+> [!TIP]
+> 必要な環境変数については[こちら](src/env.ts)をご確認ください。
+
+### GitHub Actions側の実装
 
 ```sh
 TIMESTAMP=$(date +%s)
