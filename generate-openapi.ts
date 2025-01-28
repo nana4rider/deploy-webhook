@@ -4,7 +4,8 @@ import swagger from "@fastify/swagger";
 import assert from "assert";
 import fastify from "fastify";
 import fs from "fs/promises";
-import { description, version } from "~/package.json";
+import { description, version } from "package.json";
+import path from "path";
 
 const TITLE = "Deploy Webhook";
 
@@ -41,12 +42,10 @@ try {
 
   const swaggerJson = server.swagger();
 
-  await fs.writeFile(
-    "docs/openapi.json",
-    JSON.stringify(swaggerJson, null, 2) + "\n",
-  );
+  const fileName = path.join("docs", "openapi.json");
+  await fs.writeFile(fileName, JSON.stringify(swaggerJson, null, 2) + "\n");
 
-  logger.info("Swagger JSON has been saved to swagger.json");
+  logger.info(`Swagger JSON has been saved to ${fileName}`);
 } catch (err) {
   logger.error("Error generating Swagger JSON:", err);
 } finally {
