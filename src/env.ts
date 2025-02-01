@@ -15,6 +15,11 @@ const env = cleanEnv(process.env, {
     desc: "Discord WebhookのURL",
     example: "https://discord.com/api/webhooks/.../...",
   }),
+  DISCORD_MENTION: str({
+    desc: "Discord Webhookエラー時に付与するメンション",
+    default: "@everyone",
+    example: "<@&ROLE_ID> / @everyone / @here",
+  }),
   WEBHOOK_SECRET: str({
     desc: "クライアントに共有しているシークレット",
   }),

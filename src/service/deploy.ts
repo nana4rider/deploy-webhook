@@ -45,7 +45,7 @@ export default async function executeDeployScript(serviceId: string) {
       logger.error(`Deployment failed for ${serviceId}`);
 
       await webhook.send({
-        content: "@everyone",
+        content: env.DISCORD_MENTION,
         embeds: [
           {
             title: "Failure: Deploy",
@@ -69,7 +69,7 @@ export default async function executeDeployScript(serviceId: string) {
 
     try {
       await webhook.send({
-        content: "@everyone",
+        content: env.DISCORD_MENTION,
         embeds: [
           {
             title: "Failure: Execute Deploy Script",
