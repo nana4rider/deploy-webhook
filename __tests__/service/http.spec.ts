@@ -3,7 +3,6 @@ import executeDeployScript from "@/service/deploy";
 import initializeHttpServer, { route } from "@/service/http";
 import crypto from "crypto";
 import fastify, { FastifyInstance } from "fastify";
-import { MutableEnv } from "jest.setup";
 
 jest.mock("@/service/deploy", () => ({
   __esModule: true,
@@ -14,7 +13,6 @@ describe("initializeHttpServer", () => {
   let server: FastifyInstance;
 
   beforeEach(async () => {
-    (env as MutableEnv).PORT = undefined;
     jest.clearAllMocks();
     server = await initializeHttpServer();
   });

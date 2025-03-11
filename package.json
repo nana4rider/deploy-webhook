@@ -1,6 +1,6 @@
 {
   "name": "deploy-webhook",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Webhookを介してデプロイスクリプトを実行するためのAPI",
   "author": "nana4rider",
   "license": "ISC",
@@ -14,7 +14,7 @@
     "lint:fix": "eslint --fix && prettier . --write",
     "test": "jest",
     "prepare": "husky",
-    "openapi": "tsx --env-file=.env.test generate-openapi.ts"
+    "openapi": "NODE_ENV=test tsx generate-openapi.ts"
   },
   "lint-staged": {
     "*.ts": "npm run lint"
