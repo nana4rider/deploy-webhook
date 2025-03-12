@@ -9,7 +9,7 @@ export default async function executeDeployScript(serviceId: string) {
     const { exitCode } = await exec.getExecOutput(
       env.DEPLOY_SCRIPT_PATH,
       [serviceId],
-      { ignoreReturnCode: true },
+      { ignoreReturnCode: true, silent: true },
     );
 
     if (exitCode === 0) {

@@ -43,6 +43,7 @@ describe("executeDeployScript", () => {
       [serviceId],
       {
         ignoreReturnCode: true,
+        silent: true,
       },
     );
   });
