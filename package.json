@@ -1,6 +1,6 @@
 {
   "name": "deploy-webhook",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "description": "Webhookを介してデプロイスクリプトを実行するためのAPI",
   "author": "nana4rider",
   "license": "ISC",
@@ -21,10 +21,8 @@
   },
   "dependencies": {
     "@actions/exec": "^1.1.1",
-    "discord.js": "^14.17.3",
     "envalid": "^8.0.0",
     "fastify": "^5.2.1",
-    "strip-ansi": "^7.1.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
