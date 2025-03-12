@@ -4,16 +4,16 @@ import initializeHttpServer, { route } from "@/service/http";
 import crypto from "crypto";
 import fastify, { FastifyInstance } from "fastify";
 
-jest.mock("@/service/deploy", () => ({
+vi.mock("@/service/deploy", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 describe("initializeHttpServer", () => {
   let server: FastifyInstance;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     server = await initializeHttpServer();
   });
 

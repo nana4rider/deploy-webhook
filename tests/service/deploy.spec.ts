@@ -3,35 +3,40 @@ import logger from "@/logger";
 import executeDeployScript from "@/service/deploy";
 import exec from "@actions/exec";
 import { WebhookClient } from "discord.js";
+import { Mock } from "vitest";
 
-jest.mock("@/logger", () => ({
-  info: jest.fn(),
-  error: jest.fn(),
+vi.mock("@/logger", () => ({
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
-jest.mock("@actions/exec", () => ({
-  getExecOutput: jest.fn(),
+vi.mock("@actions/exec", () => ({
+  default: {
+    getExecOutput: vi.fn(),
+  },
 }));
 
-jest.mock("discord.js", () => ({
-  WebhookClient: jest.fn().mockImplementation(() => ({
-    send: jest.fn(),
+vi.mock("discord.js", () => ({
+  WebhookClient: vi.fn().mockImplementation(() => ({
+    send: vi.fn(),
   })),
 }));
 
 describe("executeDeployScript", () => {
-  const mockWebhookSend = jest.fn();
-  const mockExecOutput = jest.fn();
+  const mockWebhookSend = vi.fn();
+  const mockExecOutput = vi.fn();
   const serviceId = "test-service";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (WebhookClient as unknown as jest.Mock).mockImplementation(() => ({
+    (WebhookClient as unknown as Mock).mockImplementation(() => ({
       send: mockWebhookSend,
     }));
 
-    (exec.getExecOutput as jest.Mock).mockImplementation(mockExecOutput);
+    (exec.getExecOutput as Mock).mockImplementation(mockExecOutput);
   });
 
   test("正常にデプロイが成功した場合、成功メッセージを送信する", async () => {
