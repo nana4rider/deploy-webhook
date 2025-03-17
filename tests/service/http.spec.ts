@@ -5,7 +5,6 @@ import crypto from "crypto";
 import fastify, { FastifyInstance } from "fastify";
 
 vi.mock("@/service/deploy", () => ({
-  __esModule: true,
   default: vi.fn(),
 }));
 
