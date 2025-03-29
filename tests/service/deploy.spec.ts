@@ -2,7 +2,7 @@ import env from "@/env";
 import logger from "@/logger";
 import executeDeployScript from "@/service/deploy";
 import exec from "@actions/exec";
-import { Mock } from "vitest";
+import type { Mock } from "vitest";
 
 vi.mock("@/logger", () => ({
   default: {

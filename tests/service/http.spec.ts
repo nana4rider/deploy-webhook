@@ -2,7 +2,8 @@ import env from "@/env";
 import executeDeployScript from "@/service/deploy";
 import initializeHttpServer, { route } from "@/service/http";
 import crypto from "crypto";
-import fastify, { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
+import fastify from "fastify";
 
 vi.mock("@/service/deploy", () => ({
   default: vi.fn(),

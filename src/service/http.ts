@@ -2,7 +2,8 @@ import env from "@/env";
 import logger from "@/logger";
 import executeDeployScript from "@/service/deploy";
 import { verifySignature } from "@/util/cryptoUtil";
-import fastify, { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
+import fastify from "fastify";
 
 export default async function initializeHttpServer() {
   const server = fastify();
