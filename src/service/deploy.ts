@@ -1,12 +1,12 @@
 import env from "@/env";
 import logger from "@/logger";
-import exec from "@actions/exec";
+import { getExecOutput } from "@actions/exec";
 
 export default async function executeDeployScript(serviceId: string) {
   logger.info(`Webhook received and verified: ${serviceId}`);
 
   try {
-    const { exitCode } = await exec.getExecOutput(
+    const { exitCode } = await getExecOutput(
       env.DEPLOY_SCRIPT_PATH,
       [serviceId],
       { ignoreReturnCode: true, silent: true },

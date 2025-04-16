@@ -1,8 +1,7 @@
 import env from "@/env";
 import logger from "@/logger";
 import executeDeployScript from "@/service/deploy";
-import exec from "@actions/exec";
-import type { Mock } from "vitest";
+import { getExecOutput } from "@actions/exec";
 
 vi.mock("@/logger", () => ({
   default: {
@@ -12,9 +11,7 @@ vi.mock("@/logger", () => ({
 }));
 
 vi.mock("@actions/exec", () => ({
-  default: {
-    getExecOutput: vi.fn(),
-  },
+  getExecOutput: vi.fn(),
 }));
 
 describe("executeDeployScript", () => {
@@ -24,7 +21,7 @@ describe("executeDeployScript", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (exec.getExecOutput as Mock).mockImplementation(mockExecOutput);
+    vi.mocked(getExecOutput).mockImplementation(mockExecOutput);
   });
 
   test("正常にデプロイが成功した場合、INFOログを出力する", async () => {
