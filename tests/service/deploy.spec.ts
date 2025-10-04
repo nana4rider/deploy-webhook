@@ -32,10 +32,10 @@ describe("executeDeployScript", () => {
 
     await executeDeployScript(serviceId);
 
-    expect(logger.info).toHaveBeenCalledWith(
-      `Webhook received and verified: ${serviceId}`,
+    expect(logger.info).toHaveBeenLastCalledWith(
+      `Deployment succeeded for ${serviceId}`,
     );
-    expect(mockExecOutput).toHaveBeenCalledWith(
+    expect(mockExecOutput).toHaveBeenCalledExactlyOnceWith(
       env.DEPLOY_SCRIPT_PATH,
       [serviceId],
       {
@@ -53,7 +53,7 @@ describe("executeDeployScript", () => {
 
     await executeDeployScript(serviceId);
 
-    expect(logger.error).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledExactlyOnceWith(
       `Deployment failed for ${serviceId}`,
     );
   });
@@ -64,7 +64,7 @@ describe("executeDeployScript", () => {
 
     await executeDeployScript(serviceId);
 
-    expect(logger.error).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledExactlyOnceWith(
       `Deployment failed for ${serviceId}`,
       error,
     );
