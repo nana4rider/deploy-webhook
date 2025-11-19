@@ -1,22 +1,16 @@
 import env from "@/env";
 import logger from "@/logger";
-import { getExecOutput } from "@actions/exec";
+import * as child_process from "child_process";
+import { promisify } from "util";
+
+const exec = promisify(child_process.exec);
 
 export default async function executeDeployScript(serviceId: string) {
   logger.info(`Webhook received and verified: ${serviceId}`);
 
   try {
-    const { exitCode } = await getExecOutput(
-      env.DEPLOY_SCRIPT_PATH,
-      [serviceId],
-      { ignoreReturnCode: true, silent: true },
-    );
-
-    if (exitCode === 0) {
-      logger.info(`Deployment succeeded for ${serviceId}`);
-    } else {
-      logger.error(`Deployment failed for ${serviceId}`);
-    }
+    await exec(`${env.DEPLOY_SCRIPT_PATH} ${serviceId}`);
+    logger.info(`Deployment succeeded for ${serviceId}`);
   } catch (err) {
     logger.error(`Deployment failed for ${serviceId}`, err);
   }

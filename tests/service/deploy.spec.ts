@@ -1,7 +1,23 @@
 import env from "@/env";
 import logger from "@/logger";
 import executeDeployScript from "@/service/deploy";
-import { getExecOutput } from "@actions/exec";
+import * as child_process from "child_process";
+
+vi.mock("child_process", async () => {
+  const actual = await vi.importActual<typeof child_process>("child_process");
+  return {
+    ...actual,
+    exec: vi.fn(),
+  };
+});
+
+type ExecCallbackOnly = (
+  command: string,
+  callback: (
+    error: Error | null,
+    result: { stdout: string; stderr: string },
+  ) => void,
+) => child_process.ChildProcess;
 
 vi.mock("@/logger", () => ({
   default: {
@@ -10,24 +26,19 @@ vi.mock("@/logger", () => ({
   },
 }));
 
-vi.mock("@actions/exec", () => ({
-  getExecOutput: vi.fn(),
-}));
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.clearAllMocks();
+});
 
 describe("executeDeployScript", () => {
-  const mockExecOutput = vi.fn();
+  const mockExec = vi.mocked(child_process.exec as ExecCallbackOnly);
   const serviceId = "test-service";
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    vi.mocked(getExecOutput).mockImplementation(mockExecOutput);
-  });
-
   test("正常にデプロイが成功した場合、INFOログを出力する", async () => {
-    mockExecOutput.mockResolvedValue({
-      stdout: "Deployment succeeded",
-      exitCode: 0,
+    mockExec.mockImplementation((_command, callback) => {
+      callback(null, { stdout: "Deployment succeeded", stderr: "" });
+      return {} as child_process.ChildProcess;
     });
 
     await executeDeployScript(serviceId);
@@ -35,36 +46,25 @@ describe("executeDeployScript", () => {
     expect(logger.info).toHaveBeenLastCalledWith(
       `Deployment succeeded for ${serviceId}`,
     );
-    expect(mockExecOutput).toHaveBeenCalledExactlyOnceWith(
-      env.DEPLOY_SCRIPT_PATH,
-      [serviceId],
-      {
-        ignoreReturnCode: true,
-        silent: true,
-      },
+    expect(mockExec).toHaveBeenCalledTimes(1);
+    expect(mockExec.mock.calls[0][0]).toBe(
+      `${env.DEPLOY_SCRIPT_PATH} ${serviceId}`,
     );
   });
 
   test("デプロイが失敗した場合、エラーログを出力する", async () => {
-    mockExecOutput.mockResolvedValue({
-      stdout: "Deployment failed",
-      exitCode: 1,
+    const error = new Error("Unexpected error");
+    mockExec.mockImplementation((_command, callback) => {
+      callback(error, {
+        stdout: "",
+        stderr: "",
+      });
+      return {} as child_process.ChildProcess;
     });
 
     await executeDeployScript(serviceId);
 
-    expect(logger.error).toHaveBeenCalledExactlyOnceWith(
-      `Deployment failed for ${serviceId}`,
-    );
-  });
-
-  test("エラーがスローされた場合、エラーログを出力する", async () => {
-    const error = new Error("Unexpected error");
-    mockExecOutput.mockRejectedValue(error);
-
-    await executeDeployScript(serviceId);
-
-    expect(logger.error).toHaveBeenCalledExactlyOnceWith(
+    expect(logger.error).toHaveBeenLastCalledWith(
       `Deployment failed for ${serviceId}`,
       error,
     );
