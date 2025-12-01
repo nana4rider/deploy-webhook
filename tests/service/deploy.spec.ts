@@ -7,12 +7,13 @@ vi.mock("child_process", async () => {
   const actual = await vi.importActual<typeof child_process>("child_process");
   return {
     ...actual,
-    exec: vi.fn(),
+    execFile: vi.fn(),
   };
 });
 
-type ExecCallbackOnly = (
+type ExecFileCallbackOnly = (
   command: string,
+  args: string[],
   callback: (
     error: Error | null,
     result: { stdout: string; stderr: string },
@@ -32,11 +33,26 @@ beforeEach(() => {
 });
 
 describe("executeDeployScript", () => {
-  const mockExec = vi.mocked(child_process.exec as ExecCallbackOnly);
+  const mockExecFile = vi.mocked(
+    child_process.execFile as ExecFileCallbackOnly,
+  );
   const serviceId = "test-service";
 
+  test("コマンドが正しく設定される", async () => {
+    mockExecFile.mockImplementation((_command, _args, callback) => {
+      callback(null, { stdout: "Deployment succeeded", stderr: "" });
+      return {} as child_process.ChildProcess;
+    });
+
+    await executeDeployScript(serviceId);
+
+    expect(mockExecFile).toHaveBeenCalledTimes(1);
+    expect(mockExecFile.mock.calls[0][0]).toBe(env.DEPLOY_SCRIPT_PATH);
+    expect(mockExecFile.mock.calls[0][1]).toEqual([serviceId]);
+  });
+
   test("正常にデプロイが成功した場合、INFOログを出力する", async () => {
-    mockExec.mockImplementation((_command, callback) => {
+    mockExecFile.mockImplementation((_command, _args, callback) => {
       callback(null, { stdout: "Deployment succeeded", stderr: "" });
       return {} as child_process.ChildProcess;
     });
@@ -46,15 +62,11 @@ describe("executeDeployScript", () => {
     expect(logger.info).toHaveBeenLastCalledWith(
       `Deployment succeeded for ${serviceId}`,
     );
-    expect(mockExec).toHaveBeenCalledTimes(1);
-    expect(mockExec.mock.calls[0][0]).toBe(
-      `${env.DEPLOY_SCRIPT_PATH} ${serviceId}`,
-    );
   });
 
   test("デプロイが失敗した場合、エラーログを出力する", async () => {
     const error = new Error("Unexpected error");
-    mockExec.mockImplementation((_command, callback) => {
+    mockExecFile.mockImplementation((_command, _args, callback) => {
       callback(error, {
         stdout: "",
         stderr: "",
