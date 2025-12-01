@@ -27,7 +27,7 @@ docker run -d \
   -p 3000:3000 \
   -v ./deploy.sh:/app/deploy.sh
   --restart always \
-  nana4rider/deploy-webhook:latest
+  ghcr.io/nana4rider/deploy-webhook:latest
 ```
 
 > [!TIP]
