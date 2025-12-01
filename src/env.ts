@@ -5,6 +5,7 @@ const env = cleanEnv(process.env, {
   PORT: port({
     desc: "HTTPサーバーのポート",
     default: 3000,
+    devDefault: testOnly(0),
   }),
   DEPLOY_SCRIPT_PATH: str({
     desc: "デプロイスクリプトのパス",
