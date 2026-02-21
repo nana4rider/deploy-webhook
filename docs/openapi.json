@@ -3,7 +3,7 @@
   "info": {
     "title": "Deploy Webhook",
     "description": "Webhookを介してデプロイスクリプトを実行するためのAPI",
-    "version": "1.6.0"
+    "version": "1.6.1"
   },
   "components": {
     "schemas": {}
