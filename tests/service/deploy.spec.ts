@@ -64,6 +64,25 @@ describe("executeDeployScript", () => {
     );
   });
 
+  test("キューへの追加時とデプロイ開始時にINFOログを出力する", async () => {
+    mockExecFile.mockImplementation((_command, _args, callback) => {
+      callback(null, { stdout: "Deployment succeeded", stderr: "" });
+      return {} as child_process.ChildProcess;
+    });
+
+    const deployment = executeDeployScript(serviceId);
+
+    expect(logger.info).toHaveBeenCalledWith(
+      `Deployment queued for ${serviceId}`,
+    );
+
+    await deployment;
+
+    expect(logger.info).toHaveBeenCalledWith(
+      `Deployment started for ${serviceId}`,
+    );
+  });
+
   test("デプロイが失敗した場合、エラーログを出力する", async () => {
     const error = new Error("Unexpected error");
     mockExecFile.mockImplementation((_command, _args, callback) => {
@@ -80,5 +99,49 @@ describe("executeDeployScript", () => {
       `Deployment failed for ${serviceId}`,
       error,
     );
+  });
+
+  test("複数のデプロイを受け付けた場合、一つずつ順番に実行する", async () => {
+    const callbacks: Array<
+      (error: Error | null, result: { stdout: string; stderr: string }) => void
+    > = [];
+    mockExecFile.mockImplementation((_command, _args, callback) => {
+      callbacks.push(callback);
+      return {} as child_process.ChildProcess;
+    });
+
+    const firstDeployment = executeDeployScript("first-service");
+    const secondDeployment = executeDeployScript("second-service");
+
+    await vi.waitFor(() => expect(mockExecFile).toHaveBeenCalledTimes(1));
+    expect(mockExecFile.mock.calls[0][1]).toEqual(["first-service"]);
+
+    callbacks[0](null, { stdout: "Deployment succeeded", stderr: "" });
+
+    await vi.waitFor(() => expect(mockExecFile).toHaveBeenCalledTimes(2));
+    expect(mockExecFile.mock.calls[1][1]).toEqual(["second-service"]);
+
+    callbacks[1](null, { stdout: "Deployment succeeded", stderr: "" });
+    await Promise.all([firstDeployment, secondDeployment]);
+  });
+
+  test("先行するデプロイが失敗しても後続のデプロイを実行する", async () => {
+    mockExecFile
+      .mockImplementationOnce((_command, _args, callback) => {
+        callback(new Error("Deployment failed"), { stdout: "", stderr: "" });
+        return {} as child_process.ChildProcess;
+      })
+      .mockImplementationOnce((_command, _args, callback) => {
+        callback(null, { stdout: "Deployment succeeded", stderr: "" });
+        return {} as child_process.ChildProcess;
+      });
+
+    await Promise.all([
+      executeDeployScript("failed-service"),
+      executeDeployScript("next-service"),
+    ]);
+
+    expect(mockExecFile).toHaveBeenCalledTimes(2);
+    expect(mockExecFile.mock.calls[1][1]).toEqual(["next-service"]);
   });
 });
