@@ -4,9 +4,10 @@ import * as child_process from "child_process";
 import { promisify } from "util";
 
 const execFileAsync = promisify(child_process.execFile);
+let deployQueue = Promise.resolve();
 
-export default async function executeDeployScript(serviceId: string) {
-  logger.info(`Webhook received and verified: ${serviceId}`);
+async function runDeployScript(serviceId: string) {
+  logger.info(`Deployment started for ${serviceId}`);
 
   try {
     await execFileAsync(env.DEPLOY_SCRIPT_PATH, [serviceId]);
@@ -14,4 +15,14 @@ export default async function executeDeployScript(serviceId: string) {
   } catch (err) {
     logger.error(`Deployment failed for ${serviceId}`, err);
   }
+}
+
+export default function executeDeployScript(serviceId: string) {
+  logger.info(`Deployment queued for ${serviceId}`);
+
+  const deployment = deployQueue.then(() => runDeployScript(serviceId));
+
+  deployQueue = deployment;
+
+  return deployment;
 }
