@@ -1,21 +1,21 @@
-import { cleanEnv, num, port, str, testOnly } from "envalid";
+import { cleanEnv, num, port, str } from "envalid";
 
 const env = cleanEnv(process.env, {
   LOG_LEVEL: str({ default: "info", desc: "ログ出力" }),
   PORT: port({
     desc: "HTTPサーバーのポート",
     default: 3000,
-    devDefault: testOnly(0),
+    testDefault: 0,
   }),
   DEPLOY_SCRIPT_PATH: str({
     desc: "デプロイスクリプトのパス",
     default: "./deploy.sh",
     example: "/path/to/deploy.sh",
-    devDefault: testOnly("/path/to/deploy.sh"),
+    testDefault: "/path/to/deploy.sh",
   }),
   WEBHOOK_SECRET: str({
     desc: "クライアントに共有しているシークレット",
-    devDefault: testOnly("secret"),
+    testDefault: "secret",
   }),
   TIME_LIMIT: num({
     default: 30,
