@@ -1,0 +1,19 @@
+pre-commit:
+  commands:
+    lint-staged:
+      glob: "*.{ts,js,json,md,yml,yaml}"
+      run: npx prettier --check {staged_files}
+    eslint:
+      glob: "*.ts"
+      run: npx eslint --max-warnings 0 {staged_files}
+    lint:
+      run: npm run lint
+    openapi:
+      run: npm run openapi && git add docs/
+
+pre-push:
+  commands:
+    type-check:
+      run: npm run type-check
+    test:
+      run: npm test

@@ -1,6 +1,6 @@
 {
   "name": "deploy-webhook",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Webhookを介してデプロイスクリプトを実行するためのAPI",
   "author": "nana4rider",
   "license": "ISC",
@@ -14,15 +14,8 @@
     "lint": "eslint --max-warnings 0 && prettier . --check",
     "lint:fix": "eslint --fix && prettier . --write",
     "test": "vitest run",
-    "prepare": "husky",
+    "prepare": "lefthook install",
     "openapi": "NODE_ENV=test tsx generate-openapi.ts"
-  },
-  "lint-staged": {
-    "*.ts": [
-      "eslint --max-warnings 0",
-      "prettier --check"
-    ],
-    "*.{js,json,md,yml,yaml}": "prettier --check"
   },
   "dependencies": {
     "envalid": "^9.0.0",
@@ -39,8 +32,7 @@
     "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "globals": "^17.13.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^17.6.0",
+    "lefthook": "^2.1.4",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "type-fest": "^5.10.0",
